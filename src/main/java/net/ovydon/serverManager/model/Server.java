@@ -1,11 +1,17 @@
 package net.ovydon.serverManager.model;
 
+import net.ovydon.serverManager.Main;
+
+import javax.swing.*;
 import java.net.Inet4Address;
 
 /**
  * @author Ovydon
  */
 public class Server {
+
+    public static final int NAME = 1;
+    public static final int IP_PORT = 2;
 
     // Entity Minecraft-Server
     private String velocityConfigName;
@@ -22,6 +28,57 @@ public class Server {
         this.velocityConfigName = velocityConfigName;
         if (!setPort(port)) throw new IllegalArgumentException("Invalid port: " + port);
         if (!setPublicIP(publicIP)) throw new IllegalArgumentException("Invalid IPv4-Address: " + publicIP);
+    }
+
+    /**
+     *
+     * @param name the server name
+     * @param ip the server IPv4
+     * @param port the 5-digit server port
+     * @return 0 - does not exist </br>1 - name already exists </br>2 - ip-port-combination already exists
+     */
+    public static int alreadyExsiting(String name, Inet4Address ip, String port){
+        return alreadyExisting(name, ip.getHostAddress(), port);
+    }
+
+    /**
+     *
+     * @param name the server name
+     * @param ip the server IPv4 in format d.d.d.d
+     * @param port the 5-digit server port
+     * @return 0 - does not exist </br>1 - name already exists </br>2 - ip-port-combination already exists
+     */
+    public static int alreadyExisting(String name, String ip, String port){
+        for (Server server : Main.getServerList()){
+            // test for name
+            if (server.getVelocityConfigName().equals(name)){
+                // name does already exist
+                return NAME;
+            }
+
+            // test for ip-port-combination
+            if (server.getPubicIPString().equals(ip) && server.getPort().equals(port)){
+                // ip-port-combination does already exist
+                return IP_PORT;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     *
+     * @param i return from alreadyExisting(...). Server.NAME, Server.IP_PORT
+     */
+    public static void messageForUser(int i){
+        switch (i){
+            case NAME:
+                JOptionPane.showMessageDialog(null, "The server name already exists!", "Invalid server name", JOptionPane.ERROR_MESSAGE);
+                break;
+            case IP_PORT:
+                JOptionPane.showMessageDialog(null, "You already added a server with the same IP and Port.", "Server already added", JOptionPane.ERROR_MESSAGE);
+                break;
+        }
     }
 
     public String getServerIP(){

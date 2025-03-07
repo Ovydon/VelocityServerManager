@@ -4,6 +4,7 @@ import net.ovydon.serverManager.Main;
 import net.ovydon.serverManager.model.Server;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -41,40 +42,49 @@ public class MainWindow extends JFrame {
             String ip = ipField.getText();
             String port = portField.getText();
 
-            // tests:
-            for (Server server : Main.getServerList()){
-                // name already existing?
-                if (name.equals(server.getVelocityConfigName())){
-                    // name does exist
-                    JOptionPane.showMessageDialog(null, "The server name \"" + name + "\" already exists!", "Invalid server name", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                // ip + port combination already existing?
-                if (server.getPort().equals(port) && server.getPublicIP().getHostAddress().equals(ip)){
-                    // ip-port-combination does exist
-                    JOptionPane.showMessageDialog(null, "You already added a server with the following IP and Port:\nIP: " + ip + "\nPort: " + port, "Server already added", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            }
             // name is not allowed to contain spaces or special symbols
             if (!name.matches("[a-zA-z0-9]+")){
                 JOptionPane.showMessageDialog(null, "The server name is only allowed to contain letters and numbers!", "Invalid server name", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            Main.addServer(new Server(name, ip, port));
+            // all fields filled
+            if (name.isEmpty() || ip.isEmpty() || port.isEmpty()) {
+                JOptionPane.showMessageDialog(null,
+                        "The name, ip and port properties must be filled.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // test server properties
+            int test = Server.alreadyExisting(name, ip, port);
+            switch (test){
+                case Server.NAME: case Server.IP_PORT:
+                    Server.messageForUser(test);
+                    return;
+            }
+
+
+            try {
+                Main.addServer(new Server(name, ip, port));
+            } catch (IllegalArgumentException e){
+                JOptionPane.showMessageDialog(null,
+                        "The IP or Port is not in the correct format!\n" +
+                        "IP must have the form 255.255.255.255\n" +
+                        "The Port must be a 5-digit port e.g. 25565",
+                        "Format Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             // reset window
             // input empty + reload server list
             repaintWindow();
-
-            System.out.println(Main.getServerListString());
         });
 
         inputPanel.add(new JLabel("server name:"));
         inputPanel.add(nameField);
-        inputPanel.add(new JLabel("IP:"));
+        inputPanel.add(new JLabel("IP-Address:"));
         inputPanel.add(ipField);
         inputPanel.add(new JLabel("Port:"));
         inputPanel.add(portField);
@@ -97,9 +107,108 @@ public class MainWindow extends JFrame {
         editButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO Action Listener edit-Button
-                System.out.println("edit server");
-                System.out.println(serverList.getSelectedValue().toString());
+                // Action Listener edit-Button
+                Server selectedServer = serverList.getSelectedValue();
+
+                // create a frame for editing server properties
+                JFrame editFrame = new JFrame("Edit Server");
+                editFrame.setSize(300, 200);
+
+                // components
+                // inputs
+                JPanel inputPanel = new JPanel();
+                inputPanel.setLayout(new GridLayout(3, 2));
+                JTextField name = new JTextField();
+                JTextField ip = new JTextField();
+                JTextField port = new JTextField();
+
+                // set inputs to current values
+                name.setText(selectedServer.getVelocityConfigName());
+                ip.setText(selectedServer.getPubicIPString());
+                port.setText(selectedServer.getPort());
+
+                inputPanel.add(new JLabel("server name:"));
+                inputPanel.add(name);
+                inputPanel.add(new JLabel("IP-Address:"));
+                inputPanel.add(ip);
+                inputPanel.add(new JLabel("Port:"));
+                inputPanel.add(port);
+
+                // buttons
+                JPanel buttonPanel = new JPanel();
+
+                // cancel button to go back to main menu
+                JButton cancelButton = new JButton("Cancel");
+                cancelButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        // close edit frame
+                        editFrame.setVisible(false);
+                        editFrame.dispose();
+                    }
+                });
+
+                // edit button for overwriting server properties
+                JButton editButton = new JButton("Edit");
+                editButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        // check values
+                        // name is not allowed to contain spaces or special symbols
+                        if (!name.getText().matches("[a-zA-z0-9]+")){
+                            JOptionPane.showMessageDialog(null, "The server name is only allowed to contain letters and numbers!", "Invalid server name", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+
+                        // test server properties
+                        int test = Server.alreadyExisting(name.getText(), ip.getText(), port.getText());
+                        switch (test){
+                            case 0:
+
+                                break;
+                            case Server.NAME:
+                                if (name.getText().equals(selectedServer.getVelocityConfigName()))
+                                    break;
+
+                            case Server.IP_PORT:
+                                Server.messageForUser(test);
+                                return;
+                        }
+
+                        // change server properties
+                        selectedServer.setVelocityConfigName(name.getText());
+
+                        if (!selectedServer.setPublicIP(ip.getText()))
+                            JOptionPane.showMessageDialog(null,
+                                    "The IP is not in the correct format!\n" +
+                                            "IP must have the form 255.255.255.255",
+                                    "Format Error", JOptionPane.ERROR_MESSAGE);
+                        if (!selectedServer.setPort(port.getText()))
+                            JOptionPane.showMessageDialog(null,
+                                    "The Port is not in the correct format!\n" +
+                                            "The Port must be a 5-digit port e.g. 25565",
+                                    "Format Error", JOptionPane.ERROR_MESSAGE);
+
+                        // repaint master window --> reload server list
+                        repaintWindow();
+
+                        // close edit frame
+                        editFrame.setVisible(false);
+                        editFrame.dispose();
+                    }
+                });
+
+                buttonPanel.add(cancelButton);
+                buttonPanel.add(editButton);
+
+                JPanel borderPanel = new JPanel();
+                borderPanel.setBorder(new EmptyBorder(10,5,10,5));
+                borderPanel.setLayout(new BorderLayout());
+                borderPanel.add(inputPanel, BorderLayout.CENTER);
+                borderPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+                editFrame.add(borderPanel);
+                editFrame.setVisible(true);
             }
         });
 
@@ -108,7 +217,7 @@ public class MainWindow extends JFrame {
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO Action Listener delete-button
+                // Action Listener delete-button
                 Server selectedServer = serverList.getSelectedValue();
                 int confirm = JOptionPane.showConfirmDialog(null, "Are you sure that you want to delete \"" + selectedServer.getVelocityConfigName() + "\" (" + selectedServer.getServerIP() + ")?", "Delete Server", JOptionPane.YES_NO_OPTION);
 
