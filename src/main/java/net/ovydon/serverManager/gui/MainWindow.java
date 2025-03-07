@@ -121,10 +121,39 @@ public class MainWindow extends JFrame {
             }
         });
 
-        serverPanel.add(listScrollPane);
-        serverPanel.add(deleteButton);
-        serverPanel.add(editButton);
+        serverPanel.setLayout(new GridBagLayout());
 
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        // GridBagConstraints ScrollPane
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3; // width over 3 columns
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.8;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        serverPanel.add(listScrollPane, gbc);
+
+        // GridBagConstraints delete-button
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1; // width over 1 column
+        gbc.weightx = 0.3;
+        gbc.weighty = 0.2;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.insets = new Insets(10, 5, 10, 5);
+
+        serverPanel.add(deleteButton, gbc);
+
+        // GridBagConstraints edit-button
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.LINE_END;
+        gbc.insets = new Insets(10, 5, 10, 5);
+
+        serverPanel.add(editButton, gbc);
     }
 
     private void repaintWindow(){
