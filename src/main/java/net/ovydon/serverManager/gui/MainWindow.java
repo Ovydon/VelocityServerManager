@@ -36,12 +36,16 @@ public class MainWindow extends JFrame {
     }
 
     private void initInputPanel(){
-        inputPanel = new JPanel(new GridLayout(4,2));
+        inputPanel = new JPanel(new GridLayout(5,2));
         inputPanel.setBorder(BorderFactory.createTitledBorder("Add Server"));
 
         JTextField nameField = new JTextField();
         JTextField ipField = new JTextField();
         JTextField portField = new JTextField();
+
+        // options for drop-down
+        String[] options = new String[]{"include", "exclude"};
+        JComboBox<String> tryStatementField = new JComboBox<>(options);
 
         JButton addButton = new JButton("Add");
         addButton.addActionListener(_ -> {
@@ -49,6 +53,7 @@ public class MainWindow extends JFrame {
             String name = nameField.getText();
             String ip = ipField.getText();
             String port = portField.getText();
+            String tryStatement = tryStatementField.getSelectedItem() != null ? (String) tryStatementField.getSelectedItem() : "exclude";
 
             // name is not allowed to contain spaces or special symbols
             if (!name.matches("[a-zA-z0-9]+")){
@@ -73,9 +78,10 @@ public class MainWindow extends JFrame {
                     return;
             }
 
-
             try {
-                Main.addServer(new Server(name, ip, port));
+                Server newServer = new Server(name, ip, port);
+                newServer.setAddToTry(tryStatement.equals("include"));
+                Main.addServer(newServer);
             } catch (IllegalArgumentException e){
                 JOptionPane.showMessageDialog(null,
                         "The IP or Port is not in the correct format!\n" +
@@ -96,6 +102,8 @@ public class MainWindow extends JFrame {
         inputPanel.add(ipField);
         inputPanel.add(new JLabel("Port:"));
         inputPanel.add(portField);
+        inputPanel.add(new JLabel("try-statement:"));
+        inputPanel.add(tryStatementField);
         inputPanel.add(new JLabel(""));
         inputPanel.add(addButton);
     }
@@ -106,11 +114,6 @@ public class MainWindow extends JFrame {
 
         Server[] servers = new Server[Main.getServerList().size()];
         servers = Main.getServerList().toArray(servers);
-
-        System.out.println("Check server list:");
-        for (Server s : servers){
-            System.out.println(s.toString());
-        }
 
         JList<Server> serverList = new JList<>(servers);
         JScrollPane listScrollPane = new JScrollPane(serverList);
@@ -130,15 +133,20 @@ public class MainWindow extends JFrame {
                 // components
                 // inputs
                 JPanel inputPanel = new JPanel();
-                inputPanel.setLayout(new GridLayout(3, 2));
+                inputPanel.setLayout(new GridLayout(4, 2));
                 JTextField name = new JTextField();
                 JTextField ip = new JTextField();
                 JTextField port = new JTextField();
+
+                // options for drop-down
+                String[] options = new String[]{"include", "exclude"};
+                JComboBox<String> tryStatementField = new JComboBox<>(options);
 
                 // set inputs to current values
                 name.setText(selectedServer.getVelocityConfigName());
                 ip.setText(selectedServer.getPubicIPString());
                 port.setText(selectedServer.getPort());
+                tryStatementField.setSelectedIndex(selectedServer.addToTry() ? 0 : 1);
 
                 inputPanel.add(new JLabel("server name:"));
                 inputPanel.add(name);
@@ -146,6 +154,8 @@ public class MainWindow extends JFrame {
                 inputPanel.add(ip);
                 inputPanel.add(new JLabel("Port:"));
                 inputPanel.add(port);
+                inputPanel.add(new JLabel("try-statement:"));
+                inputPanel.add(tryStatementField);
 
                 // buttons
                 JPanel buttonPanel = new JPanel();
@@ -190,6 +200,7 @@ public class MainWindow extends JFrame {
 
                         // change server properties
                         selectedServer.setVelocityConfigName(name.getText());
+                        selectedServer.setAddToTry(tryStatementField.getSelectedItem() != null && tryStatementField.getSelectedItem().equals("include"));
 
                         if (!selectedServer.setPublicIP(ip.getText()))
                             JOptionPane.showMessageDialog(null,
