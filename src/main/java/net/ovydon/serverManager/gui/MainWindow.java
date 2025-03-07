@@ -28,7 +28,7 @@ public class MainWindow extends JFrame {
 
     private void initInputPanel(){
         inputPanel = new JPanel(new GridLayout(4,2));
-        inputPanel.setBorder(BorderFactory.createTitledBorder("Neuen Server hinzufügen"));
+        inputPanel.setBorder(BorderFactory.createTitledBorder("Add Server"));
 
         JTextField nameField = new JTextField();
         JTextField ipField = new JTextField();
@@ -49,10 +49,12 @@ public class MainWindow extends JFrame {
                     JOptionPane.showMessageDialog(null, "The server name \"" + name + "\" already exists!", "Invalid server name", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                // Ip + port combination already existing?
-                if (server.getPort().equals(port) && server.getServerIP().equals(ip)){
+
+                // ip + port combination already existing?
+                if (server.getPort().equals(port) && server.getPublicIP().getHostAddress().equals(ip)){
                     // ip-port-combination does exist
                     JOptionPane.showMessageDialog(null, "You already added a server with the following IP and Port:\nIP: " + ip + "\nPort: " + port, "Server already added", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
             }
             // name is not allowed to contain spaces or special symbols
