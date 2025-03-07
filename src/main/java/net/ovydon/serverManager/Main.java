@@ -26,7 +26,6 @@ public class Main {
 
         File velocityFile = new File("velocity.toml");
         getAllCurrentServers(velocityFile);
-        System.out.println(getServerListString());
     }
 
     public static void initGUI(){

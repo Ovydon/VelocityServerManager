@@ -23,6 +23,10 @@ public class MainWindow extends JFrame {
 
     public MainWindow(){
 
+
+        initInputPanel();
+        initServerPanel();
+
         repaintWindow();
 
     }
@@ -98,6 +102,11 @@ public class MainWindow extends JFrame {
 
         Server[] servers = new Server[Main.getServerList().size()];
         servers = Main.getServerList().toArray(servers);
+
+        System.out.println("Check server list:");
+        for (Server s : servers){
+            System.out.println(s.toString());
+        }
 
         JList<Server> serverList = new JList<>(servers);
         JScrollPane listScrollPane = new JScrollPane(serverList);
@@ -271,6 +280,9 @@ public class MainWindow extends JFrame {
         this.setTitle("Velocity Server Controller");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(600,400);
+
+        this.remove(inputPanel);
+        this.remove(serverPanel);
 
         initInputPanel();
         initServerPanel();
