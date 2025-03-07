@@ -97,6 +97,7 @@ public class MainWindow extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 // TODO Action Listener edit-Button
                 System.out.println("edit server");
+                System.out.println(serverList.getSelectedValue().toString());
             }
         });
 
@@ -106,7 +107,17 @@ public class MainWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // TODO Action Listener delete-button
-                System.out.println("delete server");
+                Server selectedServer = serverList.getSelectedValue();
+                int confirm = JOptionPane.showConfirmDialog(null, "Are you sure that you want to delete \"" + selectedServer.getVelocityConfigName() + "\" (" + selectedServer.getServerIP() + ")?", "Delete Server", JOptionPane.YES_NO_OPTION);
+
+                if (confirm == JOptionPane.YES_OPTION){
+                    // remove server
+                    Main.removeServer(selectedServer);
+                    // info: server is deleted
+                    JOptionPane.showMessageDialog(null, "The server has been removed!", "Server deleted", JOptionPane.INFORMATION_MESSAGE);
+                    repaintWindow();
+                }
+
             }
         });
 

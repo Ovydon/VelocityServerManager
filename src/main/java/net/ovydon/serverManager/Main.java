@@ -19,8 +19,6 @@ public class Main {
     public static void main(String[] args) {
         initModels();
         initGUI();
-        System.out.println("GUI steht");
-
     }
 
     public static void initModels(){
@@ -51,6 +49,10 @@ public class Main {
 
     public static void addServer(Server server){
         serverList.add(server);
+    }
+
+    public static void removeServer(Server server){
+        serverList.remove(server);
     }
 
     public static void getAllCurrentServers(File velocityFile){
