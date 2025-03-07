@@ -17,6 +17,7 @@ public class Server {
     private String velocityConfigName;
     private Inet4Address publicIP;
     private String port;
+    private boolean addToTry = false;
 
     public Server(String velocityConfigName, Inet4Address publicIP, String port){
         this.velocityConfigName = velocityConfigName;
@@ -127,5 +128,13 @@ public class Server {
     @Override
     public String toString(){
         return velocityConfigName + " = " + getPubicIPString() + ":" + getPort();
+    }
+
+    public boolean addToTry() {
+        return addToTry;
+    }
+
+    public void setAddToTry(boolean addToTry) {
+        this.addToTry = addToTry;
     }
 }

@@ -2,14 +2,16 @@ package net.ovydon.serverManager.gui;
 
 import net.ovydon.serverManager.Main;
 import net.ovydon.serverManager.model.Server;
+import net.ovydon.serverManager.model.TOMLFileFilter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * @author Ovydon
@@ -311,8 +313,107 @@ public class MainWindow extends JFrame {
         createConfig.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO Action Listener create config
-                System.out.println("create config file");
+                // Action Listener create config
+                // ask user: save standard config or overwrite existing config?
+                String[] options = new String[]{"default config", "overwrite existing", "cancel"};
+                int choice = JOptionPane.showOptionDialog(null,
+                        "Do you want to get a default config or overwrite a existing one?",
+                        "Choose Config",
+                        JOptionPane.YES_NO_CANCEL_OPTION,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        options,
+                        options[2]);
+
+                File velocityFile;
+                switch (choice){
+                    case JOptionPane.YES_OPTION:
+                        // user chose default configuration
+                        velocityFile = new File("velocity.toml");
+                        break;
+                    case JOptionPane.NO_OPTION:
+                        // user chose overwrite
+                        velocityFile = new File("velocity.toml");
+                        break;
+                    case JOptionPane.CANCEL_OPTION: default:
+                        // user chose cancel
+                        return;
+
+                }
+
+                // --- configurate velocityFile according to server list ---
+
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(velocityFile));
+                    String line;
+                    boolean servers = false;
+
+                    ArrayList<String> configFileText = new ArrayList<>();
+                    // add comment that this file was created with Velocity Server-Manager
+                    configFileText.add("# this file was created with Velocity Server-Manager " + (new Date()));
+
+                    while ((line = br.readLine()) != null){
+
+                        if (!servers)
+                            // get all lines that are not in [servers]
+                            configFileText.add(line);
+
+                        // only [servers] relevant
+                        if (line.equals("[servers]")){
+                            servers = true;
+                            // default comments at start of [servers]
+                            configFileText.add("# Configure your servers here. Each key represents the server's name, and the value\n" +
+                                    "# represents the IP address of the server to connect to.");
+
+                            // add server information
+                            for (Server s : Main.getServerList()){
+                                configFileText.add(s.toString());
+                            }
+
+                            // default comments at start of try = []
+                            configFileText.add("\n# In what order we should try servers when a player logs in or is kicked from a server.");
+
+                            // add try
+                            configFileText.add("try = [");
+                            for (Server s : Main.getServerList()){
+                                if (s.addToTry()){
+                                    configFileText.add("\t\"" + s.getVelocityConfigName() + "\",");
+                                }
+                            }
+                            // remove comma from last line
+                            String last = configFileText.getLast().replace(",", "");
+                            configFileText.removeLast();
+                            configFileText.add(last);
+                            // close try-statement
+                            configFileText.add("]");
+
+                        } else if (line.startsWith("["))
+                            servers = false;
+
+                    }
+
+                    // file is completely read
+
+                    // get file directory
+                    File directory = getVelocityDirectory();
+                    if (directory == null)
+                        return;
+
+                    File newVelocityFile = new File(directory.getPath() + "/velocity.toml");
+
+                    try (FileWriter writer = new FileWriter(newVelocityFile)){
+                        // write config text
+                        for (String text : configFileText) {
+                            writer.write(text + "\n");
+                        }
+                    } catch (IOException exception){
+                        exception.printStackTrace();
+                    }
+
+
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
 
@@ -325,6 +426,10 @@ public class MainWindow extends JFrame {
         this.setVisible(true);
     }
 
+    /**
+     *
+     * @return a .toml-file or null if no file was choosen
+     */
     private static File getVelocityFile(){
         // the velocityFile that will be returned
         File velocityFile;
@@ -339,24 +444,31 @@ public class MainWindow extends JFrame {
         fileChooser.removeChoosableFileFilter(fileChooser.getFileFilter());
 
         // create JFileFilter
-        fileChooser.setFileFilter(new FileFilter() {
-            @Override
-            public boolean accept(File f) {
-                // only accept files, that end with .toml and directories to be shown in fileChooser
-                return f.getName().toLowerCase().endsWith(".toml") || f.isDirectory();
-            }
-
-            @Override
-            public String getDescription() {
-                // description in FileChooser
-                return "Velocity configuration file (*.toml)";
-            }
-        });
+        fileChooser.setFileFilter(new TOMLFileFilter());
 
         int fileResult = fileChooser.showOpenDialog(new JFrame());
         if (fileResult == JFileChooser.APPROVE_OPTION){
             velocityFile = fileChooser.getSelectedFile();
             return velocityFile;
+        }
+
+        return null;
+    }
+
+    private static File getVelocityDirectory(){
+        // the velocityDirectory that will be returned
+        File velocityDirectory;
+
+        // create JFileChooser to catch file from user
+        JFileChooser fileChooser = new JFileChooser();
+
+        // only Files can be selected
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int fileResult = fileChooser.showOpenDialog(new JFrame());
+        if (fileResult == JFileChooser.APPROVE_OPTION){
+            velocityDirectory = fileChooser.getSelectedFile();
+            return velocityDirectory;
         }
 
         return null;
