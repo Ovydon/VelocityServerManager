@@ -23,9 +23,6 @@ public class Main {
 
     public static void initModels(){
         serverList = new ArrayList<>();
-
-        File velocityFile = new File("velocity.toml");
-        getAllCurrentServers(velocityFile);
     }
 
     public static void initGUI(){

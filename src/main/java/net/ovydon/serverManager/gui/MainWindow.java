@@ -5,9 +5,11 @@ import net.ovydon.serverManager.model.Server;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 /**
  * @author Ovydon
@@ -295,8 +297,13 @@ public class MainWindow extends JFrame {
         loadConfig.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO Action Listener load config
-                System.out.println("load config");
+                // Action Listener load config
+                // pick file
+                File velocityFile = getVelocityFile();
+                System.out.println("got file");
+                // set servers according to file
+                Main.getAllCurrentServers(velocityFile);
+                repaintWindow();
             }
         });
 
@@ -316,6 +323,43 @@ public class MainWindow extends JFrame {
         this.add(configPanel, BorderLayout.SOUTH);
 
         this.setVisible(true);
+    }
+
+    private static File getVelocityFile(){
+        // the velocityFile that will be returned
+        File velocityFile;
+
+        // create JFileChooser to catch file from user
+        JFileChooser fileChooser = new JFileChooser();
+
+        // only Files can be selected
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        // remove all default FileFilter
+        fileChooser.removeChoosableFileFilter(fileChooser.getFileFilter());
+
+        // create JFileFilter
+        fileChooser.setFileFilter(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                // only accept files, that end with .toml and directories to be shown in fileChooser
+                return f.getName().toLowerCase().endsWith(".toml") || f.isDirectory();
+            }
+
+            @Override
+            public String getDescription() {
+                // description in FileChooser
+                return "Velocity configuration file (*.toml)";
+            }
+        });
+
+        int fileResult = fileChooser.showOpenDialog(new JFrame());
+        if (fileResult == JFileChooser.APPROVE_OPTION){
+            velocityFile = fileChooser.getSelectedFile();
+            return velocityFile;
+        }
+
+        return null;
     }
 
 }
