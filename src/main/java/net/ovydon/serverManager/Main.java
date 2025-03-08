@@ -61,37 +61,58 @@ public class Main {
             BufferedReader br = new BufferedReader(new FileReader(velocityFile));
             String line;
             boolean server_list = false;
+            boolean try_list = false;
 
             ArrayList<String> serverLines = new ArrayList<>();
+            ArrayList<String> tryLines = new ArrayList<>();
 
             while ((line = br.readLine()) != null){
+
+                // if ignore line
+                if (line.isEmpty() || line.equals(" ") || line.startsWith("#"))
+                    continue;
+
+
                 if (server_list){
-                    // wie soll mit allem nach "try = [" umgegangen werden?
-                    // ignorieren
-                    if (line.equals("try = [")){
-                        break;
-                    } else if (line.isEmpty() || line.equals(" ") || line.startsWith("#")){
+                    // detected try-statement
+                    if (line.startsWith("try = [")){
+                        // switch mode to try-statement-reading
+                        try_list = true;
+                        server_list = false;
                         continue;
                     }
                     serverLines.add(line);
+                } else if (try_list){
+                    if (line.startsWith("]")) {
+                        // end of try statement
+                        try_list = false;
+                        continue;
+                    }
+                    // try-statement reading
+                    tryLines.add(line);
                 }
 
                 if (line.equals("[servers]"))
                     server_list = true;
-                else if (line.startsWith("["))
+                else if (line.startsWith("[")) {
                     server_list = false;
+                    try_list = false;
+                }
 
             }
 
+            // reset server list (all servers will be deleted)
+            Main.setServerList(new ArrayList<>());
+
             for (String serverLine : serverLines){
 
-                // Absätze entfernen
+                // delete line break
                 serverLine = serverLine.replace("\n", "");
 
-                // Leerzeichen entfernen
+                // delete spaces
                 serverLine = serverLine.replace(" ", "");
 
-                // Servernamen, IP und Port auslesen
+                // get server-name, ip and port
                 StringBuilder serverName = new StringBuilder();
                 StringBuilder serverIP = new StringBuilder();
                 StringBuilder serverPort = new StringBuilder();
@@ -119,9 +140,24 @@ public class Main {
                     }
                 }
 
-                // Server erstellen und
-                // Server in einer Liste speichern
-                Main.addServer(new Server(serverName.toString(), Inet4Address.ofLiteral(serverIP.toString().replace("\"", "")), serverPort.toString().replace("\"", "")));
+                // get try-statement
+                boolean tryStatement = false;
+                for (String tryLine : tryLines){
+                    // extract server name from line
+                    tryLine = tryLine.replace("\"", "").replace("\t", "").replace(" ", "");
+
+                    if (tryLine.contentEquals(serverName)){
+                        tryStatement = true;
+                        break;
+                    }
+                }
+
+                // create Server
+                Server server = new Server(serverName.toString(), Inet4Address.ofLiteral(serverIP.toString().replace("\"", "")), serverPort.toString().replace("\"", ""));
+                server.setAddToTry(tryStatement);
+
+                // save Server in server list
+                Main.addServer(server);
 
             }
         } catch (IOException e) {
