@@ -7,8 +7,6 @@ import net.ovydon.serverManager.model.TOMLFileFilter;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,9 +83,10 @@ public class MainWindow extends JFrame {
                 Main.addServer(newServer);
             } catch (IllegalArgumentException e){
                 JOptionPane.showMessageDialog(null,
-                        "The IP or Port is not in the correct format!\n" +
-                        "IP must have the form 255.255.255.255\n" +
-                        "The Port must be a 5-digit port e.g. 25565",
+                        """
+                                The IP or Port is not in the correct format!
+                                IP must have the form 255.255.255.255
+                                The Port must be a 5-digit port e.g. 25565""",
                         "Format Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -121,221 +120,203 @@ public class MainWindow extends JFrame {
 
         JButton editButton = new JButton("Edit");
 
-        editButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Action Listener edit-Button
-                if (serverList.getSelectedValue() == null)
+        editButton.addActionListener(_ -> {
+            // Action Listener edit-Button
+            if (serverList.getSelectedValue() == null)
+                return;
+
+            Server selectedServer = serverList.getSelectedValue();
+
+            // create a frame for editing server properties
+            JFrame editFrame = new JFrame("Edit Server");
+            editFrame.setSize(300, 200);
+            editFrame.setIconImage(getLogo());
+
+            // components
+            // inputs
+            JPanel inputPanel = new JPanel();
+            inputPanel.setLayout(new GridLayout(4, 2));
+            JTextField name = new JTextField();
+            JTextField ip = new JTextField();
+            JTextField port = new JTextField();
+
+            // options for drop-down
+            String[] options = new String[]{"include", "exclude"};
+            JComboBox<String> tryStatementField = new JComboBox<>(options);
+
+            // set inputs to current values
+            name.setText(selectedServer.getVelocityConfigName());
+            ip.setText(selectedServer.getPubicIPString());
+            port.setText(selectedServer.getPort());
+            tryStatementField.setSelectedIndex(selectedServer.addToTry() ? 0 : 1);
+
+            inputPanel.add(new JLabel("server name:"));
+            inputPanel.add(name);
+            inputPanel.add(new JLabel("IP-Address:"));
+            inputPanel.add(ip);
+            inputPanel.add(new JLabel("Port:"));
+            inputPanel.add(port);
+            inputPanel.add(new JLabel("try-statement:"));
+            inputPanel.add(tryStatementField);
+
+            // buttons
+            JPanel buttonPanel = new JPanel();
+
+            // cancel button to go back to main menu
+            JButton cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(_ -> {
+                // close edit frame
+                editFrame.setVisible(false);
+                editFrame.dispose();
+            });
+
+            // edit button for overwriting server properties
+            JButton editButton1 = new JButton("Edit");
+            editButton1.addActionListener(_ -> {
+                // check values
+                // name is not allowed to contain spaces or special symbols
+                if (!name.getText().matches("[a-zA-z0-9]+")){
+                    JOptionPane.showMessageDialog(null, "The server name is only allowed to contain letters and numbers!", "Invalid server name", JOptionPane.ERROR_MESSAGE);
                     return;
+                }
 
-                Server selectedServer = serverList.getSelectedValue();
+                // test server properties
+                int test = Server.alreadyExisting(name.getText(), ip.getText(), port.getText());
+                switch (test){
+                    case 0:
 
-                // create a frame for editing server properties
-                JFrame editFrame = new JFrame("Edit Server");
-                editFrame.setSize(300, 200);
-                editFrame.setIconImage(getLogo());
+                        break;
+                    case Server.NAME:
+                        if (name.getText().equals(selectedServer.getVelocityConfigName()))
+                            break;
 
-                // components
-                // inputs
-                JPanel inputPanel = new JPanel();
-                inputPanel.setLayout(new GridLayout(4, 2));
-                JTextField name = new JTextField();
-                JTextField ip = new JTextField();
-                JTextField port = new JTextField();
+                    case Server.IP_PORT:
+                        Server.messageForUser(test);
+                        return;
+                }
 
-                // options for drop-down
-                String[] options = new String[]{"include", "exclude"};
-                JComboBox<String> tryStatementField = new JComboBox<>(options);
+                // change server properties
+                selectedServer.setVelocityConfigName(name.getText());
+                selectedServer.setAddToTry(tryStatementField.getSelectedItem() != null && tryStatementField.getSelectedItem().equals("include"));
 
-                // set inputs to current values
-                name.setText(selectedServer.getVelocityConfigName());
-                ip.setText(selectedServer.getPubicIPString());
-                port.setText(selectedServer.getPort());
-                tryStatementField.setSelectedIndex(selectedServer.addToTry() ? 0 : 1);
+                if (!selectedServer.setPublicIP(ip.getText()))
+                    JOptionPane.showMessageDialog(null,
+                            "The IP is not in the correct format!\n" +
+                                    "IP must have the form 255.255.255.255",
+                            "Format Error", JOptionPane.ERROR_MESSAGE);
+                if (!selectedServer.setPort(port.getText()))
+                    JOptionPane.showMessageDialog(null,
+                            "The Port is not in the correct format!\n" +
+                                    "The Port must be a 5-digit port e.g. 25565",
+                            "Format Error", JOptionPane.ERROR_MESSAGE);
 
-                inputPanel.add(new JLabel("server name:"));
-                inputPanel.add(name);
-                inputPanel.add(new JLabel("IP-Address:"));
-                inputPanel.add(ip);
-                inputPanel.add(new JLabel("Port:"));
-                inputPanel.add(port);
-                inputPanel.add(new JLabel("try-statement:"));
-                inputPanel.add(tryStatementField);
+                // repaint master window --> reload server list
+                repaintWindow();
 
-                // buttons
-                JPanel buttonPanel = new JPanel();
+                // close edit frame
+                editFrame.setVisible(false);
+                editFrame.dispose();
+            });
 
-                // cancel button to go back to main menu
-                JButton cancelButton = new JButton("Cancel");
-                cancelButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        // close edit frame
-                        editFrame.setVisible(false);
-                        editFrame.dispose();
-                    }
-                });
+            buttonPanel.add(cancelButton);
+            buttonPanel.add(editButton1);
 
-                // edit button for overwriting server properties
-                JButton editButton = new JButton("Edit");
-                editButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        // check values
-                        // name is not allowed to contain spaces or special symbols
-                        if (!name.getText().matches("[a-zA-z0-9]+")){
-                            JOptionPane.showMessageDialog(null, "The server name is only allowed to contain letters and numbers!", "Invalid server name", JOptionPane.ERROR_MESSAGE);
-                            return;
-                        }
+            JPanel borderPanel = new JPanel();
+            borderPanel.setBorder(new EmptyBorder(10,5,10,5));
+            borderPanel.setLayout(new BorderLayout());
+            borderPanel.add(inputPanel, BorderLayout.CENTER);
+            borderPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-                        // test server properties
-                        int test = Server.alreadyExisting(name.getText(), ip.getText(), port.getText());
-                        switch (test){
-                            case 0:
-
-                                break;
-                            case Server.NAME:
-                                if (name.getText().equals(selectedServer.getVelocityConfigName()))
-                                    break;
-
-                            case Server.IP_PORT:
-                                Server.messageForUser(test);
-                                return;
-                        }
-
-                        // change server properties
-                        selectedServer.setVelocityConfigName(name.getText());
-                        selectedServer.setAddToTry(tryStatementField.getSelectedItem() != null && tryStatementField.getSelectedItem().equals("include"));
-
-                        if (!selectedServer.setPublicIP(ip.getText()))
-                            JOptionPane.showMessageDialog(null,
-                                    "The IP is not in the correct format!\n" +
-                                            "IP must have the form 255.255.255.255",
-                                    "Format Error", JOptionPane.ERROR_MESSAGE);
-                        if (!selectedServer.setPort(port.getText()))
-                            JOptionPane.showMessageDialog(null,
-                                    "The Port is not in the correct format!\n" +
-                                            "The Port must be a 5-digit port e.g. 25565",
-                                    "Format Error", JOptionPane.ERROR_MESSAGE);
-
-                        // repaint master window --> reload server list
-                        repaintWindow();
-
-                        // close edit frame
-                        editFrame.setVisible(false);
-                        editFrame.dispose();
-                    }
-                });
-
-                buttonPanel.add(cancelButton);
-                buttonPanel.add(editButton);
-
-                JPanel borderPanel = new JPanel();
-                borderPanel.setBorder(new EmptyBorder(10,5,10,5));
-                borderPanel.setLayout(new BorderLayout());
-                borderPanel.add(inputPanel, BorderLayout.CENTER);
-                borderPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-                editFrame.add(borderPanel);
-                editFrame.setVisible(true);
-            }
+            editFrame.add(borderPanel);
+            editFrame.setVisible(true);
         });
 
         JButton deleteButton = new JButton("Delete");
 
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Action Listener delete-button
-                if (serverList.getSelectedValue() == null)
-                    return;
+        deleteButton.addActionListener(_ -> {
+            // Action Listener delete-button
+            if (serverList.getSelectedValue() == null)
+                return;
 
-                Server selectedServer = serverList.getSelectedValue();
-                int confirm = JOptionPane.showConfirmDialog(null, "Are you sure that you want to delete \"" + selectedServer.getVelocityConfigName() + "\" (" + selectedServer.getServerIP() + ")?", "Delete Server", JOptionPane.YES_NO_OPTION);
+            Server selectedServer = serverList.getSelectedValue();
+            int confirm = JOptionPane.showConfirmDialog(null, "Are you sure that you want to delete \"" + selectedServer.getVelocityConfigName() + "\" (" + selectedServer.getServerIP() + ")?", "Delete Server", JOptionPane.YES_NO_OPTION);
 
-                if (confirm == JOptionPane.YES_OPTION){
-                    // remove server
-                    Main.removeServer(selectedServer);
-                    // info: server is deleted
-                    JOptionPane.showMessageDialog(null, "The server has been removed!", "Server deleted", JOptionPane.INFORMATION_MESSAGE);
-                    repaintWindow();
-                }
-
+            if (confirm == JOptionPane.YES_OPTION){
+                // remove server
+                Main.removeServer(selectedServer);
+                // info: server is deleted
+                JOptionPane.showMessageDialog(null, "The server has been removed!", "Server deleted", JOptionPane.INFORMATION_MESSAGE);
+                repaintWindow();
             }
+
         });
 
         JButton moveUp = new JButton("^");
-        moveUp.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (Main.getServerList().size() <= 1)
-                    return;
-                if (serverList.getSelectedIndex() <= 0)
-                    return;
+        moveUp.addActionListener(_ -> {
+            if (Main.getServerList().size() <= 1)
+                return;
+            if (serverList.getSelectedIndex() <= 0)
+                return;
 
-                ArrayList<Server> list = Main.getServerList();
-                int index = serverList.getSelectedIndex();
-                Server[] movingServer = new Server[list.size() - index];
+            ArrayList<Server> list = Main.getServerList();
+            int index = serverList.getSelectedIndex();
+            Server[] movingServer = new Server[list.size() - index];
 
-                int count = 0;
-                for (Server s : list){
-                    if (list.indexOf(s) >= index-1 && list.indexOf(s) != index){
-                        movingServer[count] = s;
-                        count++;
-                    }
+            int count = 0;
+            for (Server s : list){
+                if (list.indexOf(s) >= index-1 && list.indexOf(s) != index){
+                    movingServer[count] = s;
+                    count++;
                 }
-
-                for (Server s : movingServer)
-                    list.remove(s);
-
-                list.addAll(Arrays.asList(movingServer));
-
-                Main.setServerList(list);
-                repaintWindow();
             }
+
+            for (Server s : movingServer)
+                list.remove(s);
+
+            list.addAll(Arrays.asList(movingServer));
+
+            Main.setServerList(list);
+            repaintWindow();
         });
 
         JButton moveDown = new JButton("v");
-        moveDown.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (Main.getServerList().size() <= 1)
-                    return;
-                if (serverList.getSelectedIndex() >= Main.getServerList().size()-1)
-                    return;
-                ArrayList<Server> list = Main.getServerList();
+        moveDown.addActionListener(_ -> {
+            if (Main.getServerList().size() <= 1)
+                return;
+            if (serverList.getSelectedIndex() >= Main.getServerList().size()-1)
+                return;
+            ArrayList<Server> list = Main.getServerList();
 
-                int index = serverList.getSelectedIndex();
-                Server[] movingServer = new Server[list.size() - index - 1];
+            int index = serverList.getSelectedIndex();
+            Server[] movingServer = new Server[list.size() - index - 1];
 
-                int count = 0;
-                boolean dontSkip = false;
+            int count = 0;
+            boolean dontSkip = false;
 
-                for (Server s : list){
-                    System.out.println("Server: " + s);
-                    if (list.indexOf(s) == index){
+            for (Server s : list){
+                System.out.println("Server: " + s);
+                if (list.indexOf(s) == index){
+                    System.out.println("add server");
+                    movingServer[count] = s;
+                    count++;
+                } else if (count >= 1) {
+                    if (dontSkip){
                         System.out.println("add server");
                         movingServer[count] = s;
                         count++;
-                    } else if (count >= 1) {
-                        if (dontSkip){
-                            System.out.println("add server");
-                            movingServer[count] = s;
-                            count++;
-                        } else
-                            dontSkip = true;
-                    }
+                    } else
+                        dontSkip = true;
                 }
-
-                for (Server s : movingServer){
-                    list.remove(s);
-                }
-
-                list.addAll(Arrays.asList(movingServer));
-
-                Main.setServerList(list);
-                repaintWindow();
             }
+
+            for (Server s : movingServer){
+                list.remove(s);
+            }
+
+            list.addAll(Arrays.asList(movingServer));
+
+            Main.setServerList(list);
+            repaintWindow();
         });
 
         serverPanel.setLayout(new GridBagLayout());
@@ -408,124 +389,118 @@ public class MainWindow extends JFrame {
         this.add(serverPanel, BorderLayout.EAST);
 
         loadConfig = new JButton("load velocity.toml");
-        loadConfig.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Action Listener load config
-                // pick file
-                File velocityFile = getVelocityFile();
-                System.out.println("got file");
-                // set servers according to file
-                Main.getAllCurrentServers(velocityFile);
-                repaintWindow();
-            }
+        loadConfig.addActionListener(_ -> {
+            // Action Listener load config
+            // pick file
+            File velocityFile = getVelocityFile();
+            System.out.println("got file");
+            // set servers according to file
+            Main.getAllCurrentServers(velocityFile);
+            repaintWindow();
         });
 
         createConfig = new JButton("create velocity.toml");
-        createConfig.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Action Listener create config
-                // ask user: save standard config or overwrite existing config?
-                String[] options = new String[]{"default config", "overwrite existing", "cancel"};
-                int choice = JOptionPane.showOptionDialog(null,
-                        "Do you want to get a default config or overwrite a existing one?",
-                        "Choose Config",
-                        JOptionPane.YES_NO_CANCEL_OPTION,
-                        JOptionPane.QUESTION_MESSAGE,
-                        null,
-                        options,
-                        options[2]);
+        createConfig.addActionListener(_ -> {
+            // Action Listener create config
+            // ask user: save standard config or overwrite existing config?
+            String[] options = new String[]{"default config", "overwrite existing", "cancel"};
+            int choice = JOptionPane.showOptionDialog(null,
+                    "Do you want to get a default config or overwrite a existing one?",
+                    "Choose Config",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[2]);
 
-                File velocityFile;
-                switch (choice){
-                    case JOptionPane.YES_OPTION:
-                        // user chose default configuration
-                        velocityFile = new File("velocity.toml");
-                        break;
-                    case JOptionPane.NO_OPTION:
-                        // user chose overwrite
-                        velocityFile = new File("velocity.toml");
-                        break;
-                    case JOptionPane.CANCEL_OPTION: default:
-                        // user chose cancel
-                        return;
+            File velocityFile;
+            switch (choice){
+                case JOptionPane.YES_OPTION:
+                    // user chose default configuration
+                    velocityFile = new File("velocity.toml");
+                    break;
+                case JOptionPane.NO_OPTION:
+                    // user chose overwrite
+                    velocityFile = new File("velocity.toml");
+                    break;
+                case JOptionPane.CANCEL_OPTION: default:
+                    // user chose cancel
+                    return;
 
-                }
+            }
 
-                // --- configurate velocityFile according to server list ---
+            // --- configure velocityFile according to server list ---
 
-                try {
-                    BufferedReader br = new BufferedReader(new FileReader(velocityFile));
-                    String line;
-                    boolean servers = false;
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(velocityFile));
+                String line;
+                boolean servers = false;
 
-                    ArrayList<String> configFileText = new ArrayList<>();
-                    // add comment that this file was created with Velocity Server-Manager
-                    configFileText.add("# this file was created with Velocity Server-Manager " + (new Date()));
+                ArrayList<String> configFileText = new ArrayList<>();
+                // add comment that this file was created with Velocity Server-Manager
+                configFileText.add("# this file was created with Velocity Server-Manager " + (new Date()));
 
-                    while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null){
 
-                        if (!servers)
-                            // get all lines that are not in [servers]
-                            configFileText.add(line);
+                    if (!servers)
+                        // get all lines that are not in [servers]
+                        configFileText.add(line);
 
-                        // only [servers] relevant
-                        if (line.equals("[servers]")){
-                            servers = true;
-                            // default comments at start of [servers]
-                            configFileText.add("# Configure your servers here. Each key represents the server's name, and the value\n" +
-                                    "# represents the IP address of the server to connect to.");
+                    // only [servers] relevant
+                    if (line.equals("[servers]")){
+                        servers = true;
+                        // default comments at start of [servers]
+                        configFileText.add("# Configure your servers here. Each key represents the server's name, and the value\n" +
+                                "# represents the IP address of the server to connect to.");
 
-                            // add server information
-                            for (Server s : Main.getServerList()){
-                                configFileText.add(s.toString());
-                            }
-
-                            // default comments at start of try = []
-                            configFileText.add("\n# In what order we should try servers when a player logs in or is kicked from a server.");
-
-                            // add try
-                            configFileText.add("try = [");
-                            for (Server s : Main.getServerList()){
-                                if (s.addToTry()){
-                                    configFileText.add("\t\"" + s.getVelocityConfigName() + "\",");
-                                }
-                            }
-                            // remove comma from last line
-                            String last = configFileText.getLast().replace(",", "");
-                            configFileText.removeLast();
-                            configFileText.add(last);
-                            // close try-statement
-                            configFileText.add("]");
-
-                        } else if (line.startsWith("["))
-                            servers = false;
-
-                    }
-
-                    // file is completely read
-
-                    // get file directory
-                    File directory = getVelocityDirectory();
-                    if (directory == null)
-                        return;
-
-                    File newVelocityFile = new File(directory.getPath() + "/velocity.toml");
-
-                    try (FileWriter writer = new FileWriter(newVelocityFile)){
-                        // write config text
-                        for (String text : configFileText) {
-                            writer.write(text + "\n");
+                        // add server information
+                        for (Server s : Main.getServerList()){
+                            configFileText.add(s.toString());
                         }
-                    } catch (IOException exception){
-                        exception.printStackTrace();
-                    }
 
+                        // default comments at start of try = []
+                        configFileText.add("\n# In what order we should try servers when a player logs in or is kicked from a server.");
 
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                        // add try
+                        configFileText.add("try = [");
+                        for (Server s : Main.getServerList()){
+                            if (s.addToTry()){
+                                configFileText.add("\t\"" + s.getVelocityConfigName() + "\",");
+                            }
+                        }
+                        // remove comma from last line
+                        String last = configFileText.getLast().replace(",", "");
+                        configFileText.removeLast();
+                        configFileText.add(last);
+                        // close try-statement
+                        configFileText.add("]");
+
+                    } else if (line.startsWith("["))
+                        servers = false;
+
                 }
+
+                // file is completely read
+
+                // get file directory
+                File directory = getVelocityDirectory();
+                if (directory == null)
+                    return;
+
+                File newVelocityFile = new File(directory.getPath() + "/velocity.toml");
+
+                try (FileWriter writer = new FileWriter(newVelocityFile)){
+                    // write config text
+                    for (String text : configFileText) {
+                        writer.write(text + "\n");
+                    }
+                } catch (IOException exception){
+                    exception.printStackTrace();
+                }
+
+
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
             }
         });
 
@@ -540,7 +515,7 @@ public class MainWindow extends JFrame {
 
     /**
      *
-     * @return a .toml-file or null if no file was choosen
+     * @return a .toml-file or null if no file was chosen
      */
     private static File getVelocityFile(){
         // the velocityFile that will be returned

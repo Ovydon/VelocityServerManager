@@ -13,7 +13,6 @@ import java.util.ArrayList;
  */
 public class Main {
 
-    private static MainWindow mainWindow;
     private static ArrayList<Server> serverList;
 
     public static void main(String[] args) {
@@ -26,17 +25,7 @@ public class Main {
     }
 
     public static void initGUI(){
-        mainWindow = new MainWindow();
-    }
-
-    public static String getServerListString(){
-        String output = "";
-        for (Server s : serverList){
-            output += s.toString() + "\n";
-        }
-        if (output.isEmpty())
-            return "";
-        return output.substring(0, output.length()-1);
+        new MainWindow();
     }
 
     public static ArrayList<Server> getServerList(){

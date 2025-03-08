@@ -34,17 +34,6 @@ public class Server {
     /**
      *
      * @param name the server name
-     * @param ip the server IPv4
-     * @param port the 5-digit server port
-     * @return 0 - does not exist </br>1 - name already exists </br>2 - ip-port-combination already exists
-     */
-    public static int alreadyExsiting(String name, Inet4Address ip, String port){
-        return alreadyExisting(name, ip.getHostAddress(), port);
-    }
-
-    /**
-     *
-     * @param name the server name
      * @param ip the server IPv4 in format d.d.d.d
      * @param port the 5-digit server port
      * @return 0 - does not exist </br>1 - name already exists </br>2 - ip-port-combination already exists
@@ -88,10 +77,6 @@ public class Server {
 
     public String getPort(){
         return port;
-    }
-
-    public Inet4Address getPublicIP(){
-        return publicIP;
     }
 
     public String getPubicIPString(){
