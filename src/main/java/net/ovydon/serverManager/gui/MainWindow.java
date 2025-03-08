@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -129,6 +130,7 @@ public class MainWindow extends JFrame {
                 // create a frame for editing server properties
                 JFrame editFrame = new JFrame("Edit Server");
                 editFrame.setSize(300, 200);
+                editFrame.setIconImage(getLogo());
 
                 // components
                 // inputs
@@ -256,6 +258,80 @@ public class MainWindow extends JFrame {
             }
         });
 
+        JButton moveUp = new JButton("^");
+        moveUp.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (Main.getServerList().size() <= 1)
+                    return;
+                if (serverList.getSelectedIndex() <= 0)
+                    return;
+
+                ArrayList<Server> list = Main.getServerList();
+                int index = serverList.getSelectedIndex();
+                Server[] movingServer = new Server[list.size() - index];
+
+                int count = 0;
+                for (Server s : list){
+                    if (list.indexOf(s) >= index-1 && list.indexOf(s) != index){
+                        movingServer[count] = s;
+                        count++;
+                    }
+                }
+
+                for (Server s : movingServer)
+                    list.remove(s);
+
+                list.addAll(Arrays.asList(movingServer));
+
+                Main.setServerList(list);
+                repaintWindow();
+            }
+        });
+
+        JButton moveDown = new JButton("v");
+        moveDown.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (Main.getServerList().size() <= 1)
+                    return;
+                if (serverList.getSelectedIndex() >= Main.getServerList().size()-1)
+                    return;
+                ArrayList<Server> list = Main.getServerList();
+
+                int index = serverList.getSelectedIndex();
+                Server[] movingServer = new Server[list.size() - index - 1];
+
+                int count = 0;
+                boolean dontSkip = false;
+
+                for (Server s : list){
+                    System.out.println("Server: " + s);
+                    if (list.indexOf(s) == index){
+                        System.out.println("add server");
+                        movingServer[count] = s;
+                        count++;
+                    } else if (count >= 1) {
+                        if (dontSkip){
+                            System.out.println("add server");
+                            movingServer[count] = s;
+                            count++;
+                        } else
+                            dontSkip = true;
+                    }
+                }
+
+                for (Server s : movingServer){
+                    list.remove(s);
+                }
+
+                list.addAll(Arrays.asList(movingServer));
+
+                Main.setServerList(list);
+                repaintWindow();
+            }
+        });
+
         serverPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -264,6 +340,7 @@ public class MainWindow extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3; // width over 3 columns
+        gbc.gridheight = 5; // height over 5 rows
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
         gbc.weighty = 0.8;
@@ -273,8 +350,9 @@ public class MainWindow extends JFrame {
 
         // GridBagConstraints delete-button
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 6;
         gbc.gridwidth = 1; // width over 1 column
+        gbc.gridheight = 1;
         gbc.weightx = 0.3;
         gbc.weighty = 0.2;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -284,17 +362,34 @@ public class MainWindow extends JFrame {
 
         // GridBagConstraints edit-button
         gbc.gridx = 2;
-        gbc.gridy = 1;
+        gbc.gridy = 6;
         gbc.anchor = GridBagConstraints.LINE_END;
         gbc.insets = new Insets(10, 5, 10, 5);
 
         serverPanel.add(editButton, gbc);
+
+        // GridBagConstraints up-button
+        gbc.gridx = 4;
+        gbc.gridy = 2;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.insets = new Insets(10,5,10,5);
+
+        serverPanel.add(moveUp, gbc);
+
+        // GridBagConstraints down-button
+        gbc.gridx = 4;
+        gbc.gridy = 4;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.insets = new Insets(10,5,10,5);
+
+        serverPanel.add(moveDown, gbc);
     }
 
     private void repaintWindow(){
         this.setTitle("Velocity Server Controller");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(600,400);
+        this.setIconImage(getLogo());
 
         this.remove(inputPanel);
         this.remove(serverPanel);
@@ -483,6 +578,10 @@ public class MainWindow extends JFrame {
         }
 
         return null;
+    }
+
+    public static Image getLogo(){
+        return new ImageIcon("logo.png").getImage();
     }
 
 }

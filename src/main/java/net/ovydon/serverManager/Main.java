@@ -43,6 +43,10 @@ public class Main {
         return serverList;
     }
 
+    public static void setServerList(ArrayList<Server> newServerList){
+        serverList = newServerList;
+    }
+
     public static void addServer(Server server){
         serverList.add(server);
     }

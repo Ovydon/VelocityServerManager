@@ -127,7 +127,7 @@ public class Server {
 
     @Override
     public String toString(){
-        return velocityConfigName + " = " + getPubicIPString() + ":" + getPort();
+        return (addToTry ? "[try] " : "") + velocityConfigName + " = " + getPubicIPString() + ":" + getPort();
     }
 
     public boolean addToTry() {
