@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author Ovydon
@@ -566,7 +567,7 @@ public class MainWindow extends JFrame {
     public static Image getLogo(){
         if (Main.class.getResource("/images/logo.png") == null)
             return null;
-        return new ImageIcon(Main.class.getResource("/images/logo.png")).getImage();
+        return new ImageIcon(Objects.requireNonNull(Main.class.getResource("/images/logo.png"))).getImage();
     }
 
 }
