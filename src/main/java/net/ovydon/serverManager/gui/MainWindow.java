@@ -17,6 +17,8 @@ import java.util.Date;
  */
 public class MainWindow extends JFrame {
 
+    public static final String DEFAULT_VELOCITY_FILE = "/defaultFiles/velocity.toml";
+
     JPanel inputPanel; // server input form
     JPanel serverPanel; // List of servers + delete btn + edit btn
 
@@ -417,11 +419,11 @@ public class MainWindow extends JFrame {
             switch (choice){
                 case JOptionPane.YES_OPTION:
                     // user chose default configuration
-                    velocityFile = new File("velocity.toml");
+                    velocityFile = new File(DEFAULT_VELOCITY_FILE);
                     break;
                 case JOptionPane.NO_OPTION:
                     // user chose overwrite
-                    velocityFile = new File("velocity.toml");
+                    velocityFile = new File(DEFAULT_VELOCITY_FILE);
                     break;
                 case JOptionPane.CANCEL_OPTION: default:
                     // user chose cancel
@@ -562,7 +564,9 @@ public class MainWindow extends JFrame {
     }
 
     public static Image getLogo(){
-        return new ImageIcon("logo.png").getImage();
+        if (Main.class.getResource("/images/logo.png") == null)
+            return null;
+        return new ImageIcon(Main.class.getResource("/images/logo.png")).getImage();
     }
 
 }

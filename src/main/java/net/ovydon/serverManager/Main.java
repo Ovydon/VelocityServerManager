@@ -6,6 +6,7 @@ import net.ovydon.serverManager.model.Server;
 
 import java.io.*;
 import java.net.Inet4Address;
+import java.net.URL;
 import java.util.ArrayList;
 
 /**
@@ -18,6 +19,13 @@ public class Main {
     public static void main(String[] args) {
         initModels();
         initGUI();
+
+        URL logoURL = Main.class.getResource("/images/logo.png");
+        if (logoURL == null) {
+            System.out.println("Logo not found!");
+        } else {
+            System.out.println("Logo found at: " + logoURL);
+        }
     }
 
     public static void initModels(){
