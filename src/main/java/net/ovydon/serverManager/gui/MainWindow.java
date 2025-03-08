@@ -125,6 +125,9 @@ public class MainWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Action Listener edit-Button
+                if (serverList.getSelectedValue() == null)
+                    return;
+
                 Server selectedServer = serverList.getSelectedValue();
 
                 // create a frame for editing server properties
@@ -244,6 +247,9 @@ public class MainWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Action Listener delete-button
+                if (serverList.getSelectedValue() == null)
+                    return;
+
                 Server selectedServer = serverList.getSelectedValue();
                 int confirm = JOptionPane.showConfirmDialog(null, "Are you sure that you want to delete \"" + selectedServer.getVelocityConfigName() + "\" (" + selectedServer.getServerIP() + ")?", "Delete Server", JOptionPane.YES_NO_OPTION);
 
