@@ -6,7 +6,6 @@ import net.ovydon.serverManager.model.Server;
 
 import java.io.*;
 import java.net.Inet4Address;
-import java.net.URL;
 import java.util.ArrayList;
 
 /**
