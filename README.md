@@ -1,3 +1,6 @@
 # Velocity Server-Manager
 With the Velocity Server-Manager you are able to manage all Servers and see them in a GUI all in one list. If needed you can add or delete servers from your list and edit server properties such as names, IP-Addresses or ports.
 With this app you can automatically create an velocity.toml with all servers, that you have listed in your app. Don't worry about the settings you already set. These will not be affected, if you wish so.
+
+## License
+<p xmlns:cc="http://creativecommons.org/ns#" >This work is licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""></a></p>
